@@ -1,13 +1,8 @@
 % To run all of the algorithms in this package, add the folders to the MATLAB
 % paths. One should just add these paths into the MATLAB startup.m file.
-if exist('C:\Users\toby.sanders\Dropbox\TobySharedMATLAB','dir')
-    mpathlight = 'C:\Users\toby.sanders\Dropbox\TobySharedMATLAB';
-elseif exist('/Users/tobysanders/Dropbox/TobySharedMATLAB','dir')
-    mpathlight = '/Users/tobysanders/Dropbox/TobySharedMATLAB';
-else
-    mpathlight = '/home/tobysanders/Dropbox/TobySharedMATLAB';
-end
-
+mpathlight = pwd;
+slashfind = strfind(mpathlight,filesep);
+mpathlight = mpathlight(1:slashfind(end)-1);
 % addpath('C:\Users\toby.sanders\Documents\repos\nga-fmv\BM3D');
 % addpath([mpathlight,'']);
 
@@ -15,26 +10,26 @@ end
 addpath([mpathlight,'/Deblur/PSFs']);
 addpath([mpathlight,'/Deblur/Operators']);
 addpath([mpathlight,'/Deblur/SURE']);
-addpath([mpathlight,'/Deblur/MFBD']);
+% addpath([mpathlight,'/Deblur/MFBD']);
 
 %%% No longer need these denoising engines... 
-% addpath([mpathlight,'/TobyShared/solvers/DenoisingEngines/BM3D']);
-% addpath([mpathlight,'/TobyShared/solvers/DenoisingEngines/BM3D/bm3d']);
-% addpath([mpathlight,'/TobyShared/solvers']);
-% addpath([mpathlight,'/TobyShared/solvers/DenoisingEngines']);
-% addpath([mpathlight,'/TobyShared/solvers/DenoisingEngines/TNRD']);
-% addpath([mpathlight,'/TobyShared/solvers/DenoisingEngines/LTBM3D']);
+% addpath([mpathlight,'/solvers/DenoisingEngines/BM3D']);
+% addpath([mpathlight,'/solvers/DenoisingEngines/BM3D/bm3d']);
+% addpath([mpathlight,'/solvers']);
+% addpath([mpathlight,'/solvers/DenoisingEngines']);
+% addpath([mpathlight,'/solvers/DenoisingEngines/TNRD']);
+% addpath([mpathlight,'/solvers/DenoisingEngines/GBM3D']);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% LTBM3D functions
+% GBM3D functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-addpath([mpathlight,'/LTBM3D/waveTransforms2D']);
-addpath([mpathlight,'/LTBM3D/waveTransforms3D']);
-addpath([mpathlight,'/LTBM3D/utilities']);
-addpath([mpathlight,'/LTBM3D/source']);
-addpath([mpathlight,'/LTBM3D/MilinfarEnhance']);
-% addpath([mpathlight,'/LTBM3D/waveletFilters']);
+addpath([mpathlight,'/GBM3D/waveTransforms2D']);
+addpath([mpathlight,'/GBM3D/waveTransforms3D']);
+addpath([mpathlight,'/GBM3D/utilities']);
+addpath([mpathlight,'/GBM3D/source']);
+addpath([mpathlight,'/GBM3D/MilinfarEnhance']);
+% addpath([mpathlight,'/GBM3D/waveletFilters']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % plug and play prior algorithms
@@ -46,28 +41,28 @@ addpath([mpathlight,'/PnP/utilities']);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % L1-L2 optimization solvers
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-addpath([mpathlight,'/TobyShared/solvers/L1']);
-addpath([mpathlight,'/TobyShared/solvers/RL']);
-addpath([mpathlight,'/TobyShared/solvers/L1/utilities']);
-addpath([mpathlight,'/TobyShared/solvers/L1/Transforms']);
-addpath([mpathlight,'/TobyShared/solvers/L1/Transforms/multiscale']);
-addpath([mpathlight,'/TobyShared/solvers/L1/Transforms/wave_shear']);
-addpath([mpathlight,'/TobyShared/solvers/L1/joint']);
-addpath([mpathlight,'/TobyShared/solvers/L1/inpaint']);
-addpath([mpathlight,'/TobyShared/solvers/L2']);
-addpath([mpathlight,'/TobyShared/solvers/tikhonov']);
-addpath([mpathlight,'/TobyShared/solvers/parm_selection']);
-addpath([mpathlight,'/TobyShared/solvers/parm_selection/Skeel']);
+addpath([mpathlight,'/solvers/L1']);
+addpath([mpathlight,'/solvers/RL']);
+addpath([mpathlight,'/solvers/L1/utilities']);
+addpath([mpathlight,'/solvers/L1/Transforms']);
+addpath([mpathlight,'/solvers/L1/Transforms/multiscale']);
+addpath([mpathlight,'/solvers/L1/Transforms/wave_shear']);
+addpath([mpathlight,'/solvers/L1/joint']);
+addpath([mpathlight,'/solvers/L1/inpaint']);
+addpath([mpathlight,'/solvers/L2']);
+addpath([mpathlight,'/solvers/tikhonov']);
+addpath([mpathlight,'/solvers/parm_selection']);
+addpath([mpathlight,'/solvers/parm_selection/Skeel']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % utilities, tomography, radar, etc.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-addpath([mpathlight,'/TobyShared/utilities']);
-% addpath([mpathlight,'/TobyShared/utilities/MRCreading']);
-% addpath([mpathlight,'/TobyShared/utilities/ShearLab3Dv10/ShearLab3Dv10/2D'])
-% addpath([mpathlight,'/TobyShared/utilities/ShearLab3Dv10/ShearLab3Dv10/3D'])
-% addpath([mpathlight,'/TobyShared/utilities/ShearLab3Dv10/ShearLab3Dv10/Util'])
-% addpath([mpathlight,'/TobyShared/utilities/ShearLab3Dv10/ShearLab3Dv10'])
+addpath([mpathlight,'/utilities']);
+% addpath([mpathlight,'/utilities/MRCreading']);
+% addpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10/2D'])
+% addpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10/3D'])
+% addpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10/Util'])
+% addpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10'])
 
 addpath([mpathlight,'/SandBox/tomography']);
 addpath([mpathlight,'/SandBox/tomography/Align'])
