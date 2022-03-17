@@ -17,7 +17,7 @@ switch mode
         % compute gradient
         params.gD = Dt(Uc - W); % gD = D'*(Du-w)
         params.gA = ifft2(Shhat2.*fft2(U)) - Atb;% gA = A'(Au-b)
-        g = beta*params.gD + mu*params.gA - gL;
+        g = beta*params.gD + mu*params.gA - gL; % complete gradient
         
         % determine step length
         if strcmp(mode,'BB')
@@ -30,9 +30,10 @@ switch mode
         else
             % optimal step length at the 1st iteration
             gc = D(g);       
-            dDd = sum(col(gc.*conj(gc)));
+            denom1 = sum(col(gc.*conj(gc)));
             Ag = ifft2(fft2(g).*hhat);% A(g,1);
-            tau = abs((g(:)'*g(:))/(beta*dDd + mu*(Ag(:)')*Ag(:)));
+            denom2 = sum(col(Ag.*conj(Ag)));
+            tau = (g(:)'*g(:))/(beta*denom1 + mu*denom2);
         end
         U = U - tau*g; % gradient descent
     case 'deconv'
