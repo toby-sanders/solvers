@@ -11,23 +11,9 @@ function [U, out] = HOTV3D(hhat,bhat,opts)
 %      deconvolution case 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % inputs: 
-%   A - blurring kernel, same size as b
-%   b - blurry image data
-%   opts.mode = 'deconv'
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%       Fourier case
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% inputs:
-%   A - indices of acquired Fourier coefficients
-%   b - values of acquired Fourier coefficients
-%   opts.mode - 'Fourier'
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%       general case
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% inputs:
-%   A - forward and adjoint operator
-%   b - data of form b = A*u + epsilon
-%   opts.mode - empty or GD or BB
+%   hhat - 3D image stack of Fourier transforms of PSFs
+%   bhat - 3D image stack of Fourier transforms of blurry image data
+%   opts - options
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -55,17 +41,11 @@ function [U, out] = HOTV3D(hhat,bhat,opts)
 % delta has actually been removed.  If one wants to solve the constrained
 % minimization problem, Au = b, then it will need to be modified to do so.
 %
-% Inputs: 
-%   A: matrix operator as either a matrix or function handle
-%   b: data values in vector form
-%   n: image/ signal dimensions in vector format
-%   opts: structure containing input parameters, 
-%       see function check_HOTV_opts.m for these
-%
+
 % Outputs:
 %   U: reconstructed signal
 %   out: output numerics
-% tic;
+
 [p,q,nF] = size(bhat);
 if size(hhat,1)~=p || size(hhat,2)~=q || size(hhat,3)~=nF
     error('PSF and image data not compatible sizes');
@@ -77,73 +57,73 @@ opts = check_HOTV_opts(opts);  % get and check opts
 tol = opts.tol; 
 tol_inn = max(tol,1e-5);  % inner loop tolerance isn't as important
 k = opts.order;
-[D,Dt] = get_D_Dt(k,p,q,1,opts);
+[D,Dt] = FD2D(k,p,q);
 
 % initialize solution, splitting variables and multipliers
 U = zeros(p,q,1); 
 sigma = D(U);  W = sigma; Uc = W;
 % delta = zeros(length(b),1);
 if size(opts.init,1) == p, U = opts.init; end
-if isfield(opts,'gL')
-    gL = opts.gL;
-else
-gL = zeros(p*q,1); % initialize gradient on lagrange multiplier
-end
+gL = zeros(p,q); % initialize gradient on lagrange multiplier
 
 V = my_Fourier_filters(k,opts.levels,p,q,1);
-Atb = sum(ifft2(bhat.*conj(hhat)),3);
-hhat2 = abs(hhat).^2; 
+
+
 
 % scaling operators and parameters for deconvolution
-scl1 = max(hhat2(:));
-hhat2 = hhat2/scl1;
-Shhat2 = sum(hhat2,3);
-% b = b/sqrt(scl1);
-Atb = Atb/scl1;
-[~,scl2] = Scaleb(col(ifft2(bhat)));%  Scaleb(b);
-opts.mu = opts.mu*scl2; 
-% if opts.automateMu, opts.mu = getL1DeconvMu(PSF,b,opts);
-% elseif 
-% end
-opts.beta = opts.beta*scl2;
+hhat2 = sum(abs(hhat).^2,3);
+out.PSFscaling = max(hhat2(:));
+hhat = hhat/sqrt(out.PSFscaling);
+hhat2 = hhat2/out.PSFscaling;
+bhat = bhat/sqrt(out.PSFscaling);
+Atb = sum(ifft2(bhat.*conj(hhat)),3);
 
 
-if round(k)~=k || opts.levels>1, opts.wrap_shrink = true; end
+
+[~,out.paramsScaling] = Scaleb(col(ifft2(bhat)));%  Scaleb(b);
+mu = opts.mu*out.paramsScaling; 
+beta = opts.beta*out.paramsScaling;
+params.gA = 0;
+params.gD = 0;
+
+if round(k)~=k || opts.levels>1 || k==0, opts.wrap_shrink = true; end
 if ~opts.wrap_shrink, ind = get_ind(k,p,q,1);
+    ind = ind(ind<p*q*2);
 else, ind=[]; end
 
-% initialize everything else
-out.rel_chg_inn = []; out.objf_val = [];
-mu = opts.mu;% min(opts.mu,1e2);
-beta = opts.beta;% *opts.mu/1e3;
 
-muDbeta = mu/beta;
+
+% initialize output variables
+out.rel_chg_inn = []; out.objf_val = [];
 ii = 0;  % main loop
 while numel(out.rel_chg_inn) < opts.iter
     ii = ii + 1; % count number of multiplier updates
+    updateMode = 'GD';
     for jj = 1:opts.inner_iter
 
         % alternating minimization steps between U and W
-        [U,uup] = updateU_HOTV_deblur(Shhat2,Atb,Dt,U,W,gL,V,muDbeta,beta,opts);
+        [U,params] = updateU_HOTV_deblur(hhat2,hhat,Atb,D,Dt,U,Uc,W,gL,V,mu,beta,opts.nonneg,params,updateMode);
         Uc = D(U);
         W = shrinkage(Uc,opts.L1type,beta,sigma,opts.wrap_shrink,ind);
-        
+        if strcmp(updateMode,'GD')
+            updateMode = 'BB';
+        end
 
+        % check for convergence
+        rel_chg_inn = norm(params.uup)/norm(U(:));
+        out.rel_chg_inn = [out.rel_chg_inn;rel_chg_inn];
+        if rel_chg_inn<opts.tol && ii>5
+            out.mu = mu;
+            out.total_iter = numel(out.rel_chg_inn);
+            out.relUW = myrel(W,Uc);
+            return;
+        end
 
     end
     sigma = sigma - beta*(Uc-W);
     gL = Dt(sigma);%  + A(delta,2); 
-
-    % check for convergence
-        rel_chg_inn = norm(uup)/norm(U(:));
-        out.rel_chg_inn = [out.rel_chg_inn;rel_chg_inn];
-
-    % update multipliers and gradient       
-    mu = min(opts.mu,mu*2.5);
-    muDbeta = mu/beta;
 end
 out.mu = mu;
-% out.elapsed_time = toc;
 out.total_iter = numel(out.rel_chg_inn);
 out.relUW = myrel(W,Uc);
 
@@ -156,11 +136,10 @@ if strcmp(L1type,'anisotropic')
 elseif strcmp(L1type,'isotropic')
     W = Uc - sigma/beta;
     Ucbar_norm = sqrt(W(:,1).*conj(W(:,1)) + ...
-        W(:,2).*conj(W(:,2)) + W(:,3).*conj(W(:,3)));
+        W(:,2).*conj(W(:,2)) );
     Ucbar_norm = max(Ucbar_norm - 1/beta, 0)./(Ucbar_norm+eps);
     W(:,1) = W(:,1).*Ucbar_norm;
     W(:,2) = W(:,2).*Ucbar_norm;
-    W(:,3) = W(:,3).*Ucbar_norm;
 else
     error('Somethings gone wrong.  L1type is either isotropic or anisotropic');
 end
