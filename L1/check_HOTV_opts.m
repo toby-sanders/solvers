@@ -48,6 +48,14 @@ if islogical(opts.data_mlp) & opts.data_mlp
     opts.data_mlp = opts.iter;
 end
 
+if islogical(opts.data_mlp) & opts.data_mlp
+    opts.data_mlp = opts.iter;
+end
+
+if ~isfield(opts,'dataLM')
+    opts.dataLM = false;
+end
+
 if ~isfield(opts,'mode')
     opts.mode = 'GD';
 end
