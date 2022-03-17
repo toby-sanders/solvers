@@ -1,4 +1,4 @@
-function [U, out] = HOTV3D(hhat,bhat,opts)
+function [U, out] = HOTV2D_MFD(hhat,bhat,opts)
 
 % written by Toby Sanders @magnetic insight
 
@@ -58,7 +58,7 @@ if ~opts.wrap_shrink, ind = get_ind(k,p,q,1);
 else, ind=[]; end
 
 % set up the update function so only pass in parameters that change
-LocalUpdateU = @(U,Uc,W,gL,mu,beta,params,updateMode)updateU_HOTV_deblur(...
+LocalUpdateU = @(U,Uc,W,gL,mu,beta,params,updateMode)updateU_MFD(...
     hhat2,hhat,Atb,D,Dt,U,Uc,W,gL,V,mu,beta,opts.nonneg,params,updateMode);
 
 ii = 0;  % main loop
