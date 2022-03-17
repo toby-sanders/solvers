@@ -1,4 +1,4 @@
-function [U, out] = HOTV3D(A,b,n,opts)
+function [U, out] = HOTV3D(hhat,bhat,opts)
 
 % written by Toby Sanders @Lickenbrock tech
 % Last update: 12/2019
@@ -66,130 +66,87 @@ function [U, out] = HOTV3D(A,b,n,opts)
 %   U: reconstructed signal
 %   out: output numerics
 % tic;
-if numel(n)<3, n(end+1:3) = 1;
-elseif numel(n)>3, error('n can have at most 3 dimensions');end
-p = n(1); q = n(2); r = n(3);
+[p,q,nF] = size(bhat);
+if size(hhat,1)~=p || size(hhat,2)~=q || size(hhat,3)~=nF
+    error('PSF and image data not compatible sizes');
+end
+
 opts = check_HOTV_opts(opts);  % get and check opts
 
 % mark important variables
 tol = opts.tol; 
 tol_inn = max(tol,1e-5);  % inner loop tolerance isn't as important
-k = opts.order; n = p*q*r;
-[D,Dt] = get_D_Dt(k,p,q,r,opts);
+k = opts.order;
+[D,Dt] = get_D_Dt(k,p,q,1,opts);
 
 % initialize solution, splitting variables and multipliers
-U = zeros(p,q,r); 
+U = zeros(p,q,1); 
 sigma = D(U);  W = sigma; Uc = W;
 % delta = zeros(length(b),1);
 if size(opts.init,1) == p, U = opts.init; end
-gL = zeros(p*q*r,1); % initialize gradient on lagrange multiplier
-
-% For each case, initialize variables used in code that are not updated
-if ~sum(strcmp(opts.mode,{'Fourier','deconv'}))
-    % check that A* is true adjoint of A
-    % check scaling of parameters, etc.
-    if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
-    [flg,~,~] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[n,1]);
-    if ~flg, error('A and A* do not appear consistent'); end; clear flg;
-    if opts.scale_A, [A,b] = ScaleA(n,A,b); end
-    params.Atb = A(b,2); % A'*b
-    [~,scl] = Scaleb(b);
-    if opts.scale_mu, opts.mu = opts.mu*scl; end
-    opts.beta = opts.beta*scl;
-elseif strcmp(opts.mode,'deconv')
-    params.V = my_Fourier_filters(k,opts.levels,p,q,r);
-    PSF = A;
-    A = fftn(A); % overwrite convolution kernel with its FT
-    params.Atb = ifftn(fftn(b).*conj(A));
-    A = A.*conj(A); 
-
-    % scaling operators and parameters for deconvolution
-    scl1 = max(A(:));
-    A = A/scl1;
-    b = b/sqrt(scl1);
-    PSF = PSF/sqrt(scl1);
-    params.Atb = params.Atb/scl1;
-    [~,scl2] = Scaleb(b);
-    if opts.automateMu, opts.mu = getL1DeconvMu(PSF,b,opts);
-    elseif opts.scale_mu, opts.mu = opts.mu*scl2; 
-    end
-    opts.beta = opts.beta*scl2;
-else % Fourier case
-    warning('For an unknown reason, this Fourier version of the code may not work for higher orders');
-    params.ibstr = zeros(p,q,r);
-    params.ibstr(A) = b;
-    params.ibstr = ifftn(params.ibstr)*sqrt(prod(n));
-    params.V = my_Fourier_filters(k,opts.levels,p,q,r);
-    params.VS = zeros(p,q,r);
-    params.VS(A) = 1;
+if isfield(opts,'gL')
+    gL = opts.gL;
+else
+gL = zeros(p*q,1); % initialize gradient on lagrange multiplier
 end
 
+V = my_Fourier_filters(k,opts.levels,p,q,1);
+Atb = sum(ifft2(bhat.*conj(hhat)),3);
+hhat2 = abs(hhat).^2; 
+
+% scaling operators and parameters for deconvolution
+scl1 = max(hhat2(:));
+hhat2 = hhat2/scl1;
+Shhat2 = sum(hhat2,3);
+% b = b/sqrt(scl1);
+Atb = Atb/scl1;
+[~,scl2] = Scaleb(col(ifft2(bhat)));%  Scaleb(b);
+opts.mu = opts.mu*scl2; 
+% if opts.automateMu, opts.mu = getL1DeconvMu(PSF,b,opts);
+% elseif 
+% end
+opts.beta = opts.beta*scl2;
+
+
 if round(k)~=k || opts.levels>1, opts.wrap_shrink = true; end
-if ~opts.wrap_shrink, ind = get_ind(k,p,q,r);
+if ~opts.wrap_shrink, ind = get_ind(k,p,q,1);
 else, ind=[]; end
 
 % initialize everything else
 out.rel_chg_inn = []; out.objf_val = [];
-beta = opts.beta;
-mu = opts.mu;
+mu = opts.mu;% min(opts.mu,1e2);
+beta = opts.beta;% *opts.mu/1e3;
 
-objf_best = 1e20;
+muDbeta = mu/beta;
 ii = 0;  % main loop
 while numel(out.rel_chg_inn) < opts.iter
     ii = ii + 1; % count number of multiplier updates
-    % set the update mode for U
-    params.mode = 'GD'; % first step after each update is optimal descent
-    if strcmp(opts.mode,'Fourier'), params.mode = 'Fourier';
-    elseif strcmp(opts.mode,'deconv'), params.mode = 'deconv'; 
-    end
     for jj = 1:opts.inner_iter
+
         % alternating minimization steps between U and W
-        [U,params] = updateU_HOTV(A,D,Dt,U,Uc,W,gL,mu,beta,params,opts);
+        [U,uup] = updateU_HOTV_deblur(Shhat2,Atb,Dt,U,W,gL,V,muDbeta,beta,opts);
         Uc = D(U);
         W = shrinkage(Uc,opts.L1type,beta,sigma,opts.wrap_shrink,ind);
         
-        % check for convergence
-        rel_chg_inn = norm(params.uup)/norm(U(:));
-        out.rel_chg_inn = [out.rel_chg_inn;rel_chg_inn];
-        
-        %  compute objective function values for general case
-        if isfield(params,'Au')
-            Aub = params.Au - b;
-            out.objf_val = [out.objf_val; mu/2*(Aub)'*Aub+sum(abs(Uc(:)))]; 
-            if out.objf_val(end) < objf_best
-                objf_best = out.objf_val(end);out.Ubest = U;
-                out.Ubest_iter = numel(out.rel_chg_inn)-1;
-            end
-        end      
-        % check inner loop convergence
-        if (rel_chg_inn < tol_inn) || numel(out.rel_chg_inn)>=opts.iter, break; end 
+
 
     end
-    % convergence criteria
-    if jj<opts.inner_iter && rel_chg_inn<tol && ii>4, break;end
-    
-    % update multipliers and gradient
-    % if opts.data_mlp, delta = delta - mu*Aub; end
     sigma = sigma - beta*(Uc-W);
-    gL = Dt(sigma);%  + A(delta,2);    
+    gL = Dt(sigma);%  + A(delta,2); 
+
+    % check for convergence
+        rel_chg_inn = norm(uup)/norm(U(:));
+        out.rel_chg_inn = [out.rel_chg_inn;rel_chg_inn];
+
+    % update multipliers and gradient       
+    mu = min(opts.mu,mu*2.5);
+    muDbeta = mu/beta;
 end
 out.mu = mu;
 % out.elapsed_time = toc;
 out.total_iter = numel(out.rel_chg_inn);
-if opts.disp
-    if isfield(params,'Au')
-        out.final_error = norm(params.Au-b)/norm(b(:));
-        fprintf('||Au-b||/||b||: %5.3f\n',out.final_error);
-        fprintf('mu/2*||Au-b||^2 + ||Du||_1: %g\n',out.objf_val(end));
-    end
-    % output these so one may check optimality conditions
-    out.optimallity = sigma + beta*(W-Uc);
-    if ~sum(strcmp(opts.mode,{'Fourier','deconv'}))
-    out.optimallity2 = mu*params.gA + beta*params.gD - gL;
-    end
+out.relUW = myrel(W,Uc);
 
-    fprintf('total iteration count: %i\n',out.total_iter);
-end
 
 function W = shrinkage(Uc,L1type,beta,sigma,wrap_shrink,ind)
 % update step on W using shrinkage formulas
