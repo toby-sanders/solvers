@@ -19,7 +19,7 @@ function [dU] = D_Forward(U,k,p,q)
 
 
 if k~=0
-    U = reshape(U,p,q);
+    % U = reshape(U,p,q);
     dU = zeros(p,q,2);
     if k<=q
         dU(:,:,1) = diff([U,U(:,1:k)],k,2);
@@ -27,10 +27,11 @@ if k~=0
     if k<=p
         dU(:,:,2) = diff([U;U(1:k,:)],k,1);
     end
-    dU = reshape(dU,p*q,2);
+    % dU = reshape(dU,p*q,2);
 else
     %standard l1 minimization of order 0
-    dU = U(:);
+    dU = U;
+    % dU = U(:);
 end
 
 dU = dU*2^(1-k);  % normalization
@@ -42,7 +43,7 @@ function U = D_Adjoint(dU,k,p,q)
 
 if k~=0
     U = zeros(p,q);
-    dU = reshape(dU,p,q,2);
+    % dU = reshape(dU,p,q,2);
     if k<=q
         U = U + (-1)^k*diff([dU(:,end-k+1:end,1),dU(:,:,1)],k,2);
     end    
@@ -52,7 +53,7 @@ if k~=0
     % U = U(:);
 else
     %standard l1 minimization
-    U = reshape(dU,p,q);
+    U = dU;% reshape(dU,p,q);
 end
     
 U = U*2^(1-k);  % normalization

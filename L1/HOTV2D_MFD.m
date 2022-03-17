@@ -106,11 +106,11 @@ if strcmp(L1type,'anisotropic')
     W = max(abs(W) - 1/beta, 0).*sign(W);    
 elseif strcmp(L1type,'isotropic')
     W = Uc - sigma/beta;
-    Ucbar_norm = sqrt(W(:,1).*conj(W(:,1)) + ...
-        W(:,2).*conj(W(:,2)) );
+    Ucbar_norm = sqrt(sum(abs(W).^2,3));% sqrt(W(:,1).*conj(W(:,1)) + ...
+        % W(:,2).*conj(W(:,2)) );
     Ucbar_norm = max(Ucbar_norm - 1/beta, 0)./(Ucbar_norm+eps);
-    W(:,1) = W(:,1).*Ucbar_norm;
-    W(:,2) = W(:,2).*Ucbar_norm;
+    W(:,:,1) = W(:,:,1).*Ucbar_norm;
+    W(:,:,2) = W(:,:,2).*Ucbar_norm;
 else
     error('Somethings gone wrong.  L1type is either isotropic or anisotropic');
 end
