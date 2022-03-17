@@ -32,6 +32,7 @@ k = opts.order;
 U = zeros(p,q,1); 
 sigma = D(U);  W = sigma; Uc = W;
 delta = zeros(p,q,nF);
+rho = zeros(p,q);rhoGamma = 1;
 if size(opts.init,1) == p, U = opts.init; end
 gL = zeros(p,q); % initialize gradient on lagrange multiplier
 V = my_Fourier_filters(k,opts.levels,p,q,1);
@@ -65,6 +66,10 @@ ii = 0;  % main loop
 while numel(out.rel_chg_inn) < opts.iter
     ii = ii + 1; % count number of multiplier updates
     updateMode = 'GD';
+    if ii>5
+        % updateMode = 'deconv';
+    end
+
     for jj = 1:opts.inner_iter
         % alternating minimization steps between U and W
         [U,params] = LocalUpdateU(U,Uc,W,gL,mu,beta,params,updateMode);
@@ -84,15 +89,16 @@ while numel(out.rel_chg_inn) < opts.iter
             return;
         end
     end
-    % update Lagrange multiplier and its gradient
+    % update Lagrange multiplier(s) and its gradient
     sigma = sigma - beta*(Uc-W);
+    rho = min(rho + rhoGamma*U,0);
     if opts.dataLM
         delta = delta - mu*((fft2(U).*hhat - bhat)); % LM for data term
         gdelta = sum(ifft2(delta.*conj(hhat)),3);
     else
         gdelta = 0;
     end
-    gL = Dt(sigma) + gdelta;
+    gL = Dt(sigma) + gdelta - rho;
 end
 out.mu = mu;
 out.total_iter = numel(out.rel_chg_inn);
