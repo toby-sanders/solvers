@@ -20,6 +20,12 @@ end
 % end
 
 
+if numel(k)>1
+    if r==1
+        [D,Dt] = FD2D_pair(k,p,q,[1, 1]);
+    end
+    return;
+end
 
 
 
