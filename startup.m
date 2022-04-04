@@ -6,6 +6,8 @@ mpathlight = mpathlight(1:slashfind(end)-1);
 % addpath('C:\Users\toby.sanders\Documents\repos\nga-fmv\BM3D');
 % addpath([mpathlight,'']);
 
+addpath([mpathlight,'/MI_base/utilities']);
+addpath([mpathlight,'/MI_base/operators']);
 
 addpath([mpathlight,'/Deblur/PSFs']);
 addpath([mpathlight,'/Deblur/Operators']);
@@ -111,5 +113,6 @@ addpath([irtdir 'wls']);		% weighted least-squares (WLS) estimates
 clear mainpath;
 clear irtdir;
 clear mpathlight;
+clear slashfind;
 
 fprintf('WELCOME! :)\n')
