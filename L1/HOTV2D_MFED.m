@@ -1,4 +1,4 @@
-function [U, out] = HOTV2D_MFD(hhat,bhat,opts)
+function [U, out] = HOTV2D_MFD(hhat,b,opts)
 
 % written by Toby Sanders @magnetic insight
 
@@ -17,11 +17,12 @@ function [U, out] = HOTV2D_MFD(hhat,bhat,opts)
 %   U: deconvolved image
 %   out: output numerics
 
-[p,q,nF] = size(bhat);
+[p,q,nF] = size(b);
 if size(hhat,1)~=p || size(hhat,2)~=q || size(hhat,3)~=nF
     error('PSF and image data not compatible sizes');
 end
 opts = check_HOTV_opts(opts);  % get and check opts
+
 
 % mark important variables
 tol = opts.tol; 
@@ -41,11 +42,12 @@ hhat2 = sum(abs(hhat).^2,3);
 out.PSFscaling = max(hhat2(:));
 hhat = hhat/sqrt(out.PSFscaling);
 hhat2 = hhat2/out.PSFscaling;
-bhat = bhat/sqrt(out.PSFscaling);
-Atb = sum(ifft2(bhat.*conj(hhat)),3);
+b = b/sqrt(out.PSFscaling);
+A = @(I,mode)MPIDeconvEdgePinOper(I,mode,hhat);
+Atb = A(b,2);% sum(ifft2(bhat.*conj(hhat)),3);
 
 % scale the parameters to account for data scaling and L1 vs. L2 norms
-[~,out.paramsScaling] = Scaleb(col(ifft2(bhat)));
+[~,out.paramsScaling] = Scaleb(b(:));
 mu = opts.mu*out.paramsScaling; 
 beta = opts.beta*out.paramsScaling;
 params.gA = 0;
@@ -58,8 +60,8 @@ if ~opts.wrap_shrink, ind = get_ind(k,p,q,1);
 else, ind=[]; end
 
 % set up the update function so only pass in parameters that change
-LocalUpdateU = @(U,Uc,W,gL,mu,beta,params,updateMode)updateU_MFD(...
-    hhat2,hhat,Atb,D,Dt,U,Uc,W,gL,V,mu,beta,opts.nonneg,params,updateMode);
+LocalUpdateU = @(U,Uc,W,gL,mu,beta,params,updateMode)updateU_MFED(...
+    A,Atb,D,Dt,U,Uc,W,gL,V,mu,beta,opts.nonneg,params,updateMode);
 
 ii = 0;  % main loop
 while numel(out.rel_chg_inn) < opts.iter
@@ -87,8 +89,8 @@ while numel(out.rel_chg_inn) < opts.iter
     % update Lagrange multiplier and its gradient
     sigma = sigma - beta*(Uc-W);
     if opts.dataLM
-        delta = delta - mu*((fft2(U).*hhat - bhat)); % LM for data term
-        gdelta = sum(ifft2(delta.*conj(hhat)),3);
+        delta = delta - mu*(A(U,1)-b);% mu*((fft2(U).*hhat - bhat)); % LM for data term
+        gdelta = A(delta,2);% sum(ifft2(delta.*conj(hhat)),3);
     else
         gdelta = 0;
     end

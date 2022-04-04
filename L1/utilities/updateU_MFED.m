@@ -1,4 +1,4 @@
-function [U,params] = updateU_MFD(Shhat2,hhat,Atb,D,Dt,U,Uc,W,gL,V,mu,beta,nonneg,params,mode)
+function [U,params] = updateU_MFD(A,Atb,D,Dt,U,Uc,W,gL,V,mu,beta,nonneg,params,mode)
 
 % single step updates on U for HOTV L1 ADMM optimization
 % this is really just a quadratic minimization step
@@ -16,7 +16,7 @@ switch mode
         end
         % compute gradient
         params.gD = Dt(Uc - W); % gD = D'*(Du-w)
-        params.gA = ifft2(Shhat2.*fft2(U)) - Atb;% gA = A'(Au-b)
+        params.gA = A(A(U,1),2) - Atb;% ifft2(Shhat2.*fft2(U)) - Atb;% gA = A'(Au-b)
         g = beta*params.gD + mu*params.gA - gL; % complete gradient
         
         % determine step length
@@ -31,7 +31,7 @@ switch mode
             % optimal step length at the 1st iteration
             gc = D(g);       
             denom1 = sum(col(gc.*conj(gc)));
-            Ag = ifft2(fft2(g).*hhat);% A(g,1);
+            Ag = A(g,1);% ifft2(fft2(g).*hhat);% A(g,1);
             denom2 = sum(col(Ag.*conj(Ag)));
             tau = (g(:)'*g(:))/(beta*denom1 + mu*denom2);
         end
