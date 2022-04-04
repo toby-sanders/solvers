@@ -7,7 +7,7 @@ function [U,params] = updateU_MFD(Shhat2,hhat,Atb,D,Dt,U,Uc,W,gL,V,mu,beta,nonne
 
 [p,q] = size(U);
 Up = U; % save previous U for convergence checking and BB steps
-
+mode = 'deconv';
 switch mode
     case {'BB','GD'}
         if isfield(params,'gA')
@@ -39,7 +39,7 @@ switch mode
     case 'deconv'
         % updates for deconvolution
         % with large mu, this update will fail with nonneg constraint!
-        alpha = .5;
+        alpha = 1;
         z = fft2(mu*Atb+reshape(Dt(beta*W)+gL,p,q,1));
         U = ifft2(z./(mu*Shhat2 + beta*V));
         U = alpha*U + (1-alpha)*Up;
