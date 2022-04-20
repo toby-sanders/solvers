@@ -29,7 +29,7 @@ p = n(1); q = n(2); r = n(3);
 
 % unify implementation of A, check scaling A
 if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
-if opts.scale_A, [A,b] = ScaleA(p*q*r,A,b); end
+% if opts.scale_A, [A,b] = ScaleA(p*q*r,A,b); end
 [D,Dt] = get_D_Dt(opts.order,p,q,r,opts);
 B = @(x)A(A(x,1),2) + Dt(D(x))/opts.mu;
 c = A(b,2);

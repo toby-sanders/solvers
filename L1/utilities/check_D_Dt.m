@@ -17,7 +17,7 @@ Dtv = Dt(v);
 x = sum(Du(:).*conj(v(:)));
 y = sum(u(:).*conj(Dtv(:)));
 
-tol = 1e-7;
+tol = 1e-2;
 
 flg = abs(x-y)/abs(x)<tol;
 

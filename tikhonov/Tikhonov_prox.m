@@ -1,10 +1,14 @@
-function [x,out] = Tikhonov_SD(A,b,n,opts)
+function [x,out] = Tikhonov_prox(A,b,n,opts)
+
+% this version uses a proximal gradient method with acceleration via the
+% Nesterov method/heavy ball approach
+
 
 % This function solves
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % min_x    mu*||Ax-b||^2 + ||Dx||^2
 % subject to optional inequality constaints
-% using a simple steepest decent method
+% using a simple steepest descent method
 % D is a finite difference operator
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -15,7 +19,7 @@ function [x,out] = Tikhonov_SD(A,b,n,opts)
 % order - order of the finite difference reg. operator, D
 % iter - maximum number of iterations for CG
 % mu - regularization parameter (see formulation above)
-% tol - convergence tolerance for CG
+% tol - convergence tolerance
 % levels - default is 1, but for higher integers it uses a multiscale
 % operators for D
 
@@ -29,12 +33,6 @@ elseif numel(n)>3, error('n can have at most 3 dimensions'); end
 p = n(1); q = n(2); r = n(3);
 n = p*q*r;
 
-% mark important constants
-mu = opts.mu;
-iter = opts.iter;
-tol = opts.tol;
-k = opts.order;
-
 % unify implementation of A
 if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode);end
 
@@ -43,78 +41,47 @@ if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode);end
 if ~flg, error('A and A* do not appear consistent'); end
 clear flg;
 
-% check scaling A
-% if opts.scale_A, [A,b] = ScaleA(p*q*r,A,b); end
+% get the step length, which is 1/lambda_max(A^T*A)
+[tau,out.tauStuff] = getStepLength(A,n);
+tau = tau*.95;
 
 % initialize out and x
-out.rel_error = zeros(iter,1);
-out.nrm_reg = zeros(iter,1);
-out.obj_func = zeros(iter,1);
-out.rel_chg = zeros(iter,1);
-x = zeros(p*q*r,1);
+out.rel_chg = zeros(opts.iter,1);
+x = zeros(n,1);
+xp = x;
 
+% construct the denoising filter used in the proximal step
+V = my_Fourier_filters(opts.order,opts.levels,p,q,r);
+filt = 1./(1 + tau*V/opts.mu);
 
-[D,Dt] = get_D_Dt(opts.order,p,q,r,opts);
-%rescale for the l2 norm
-% if k~=0
-%     D = @(x)D(x)*2^(k-1)/sqrt(nchoosek(2*(k-1),k - 1));
-%     Dt = @(x)Dt(x)*2^(k-1)/sqrt(nchoosek(2*(k-1),k - 1));
-% end
-[flg,~,~] = check_D_Dt(D,Dt,[p,q,r]);
-if ~flg
-    error('D and Dt do not appear consistent');
-end
-clear flg;
-
-nrmb = norm(b);
-e = A(x,1)-b;  % Ax - b
-dd = D(x);   % Dx
 tic;
-% fprintf('Running Tikhonov solver...\n');
-for i = 1:iter
+for i = 1:opts.iter
       
-    g = mu*A(e,2)+Dt(dd); % gradient
-    % step length, tau
-    if 1>0% i==1 || iter-i < 3
-        Ag = A(g,1); Dg = D(g);
-        tau = g'*g/(mu*(Ag'*Ag) + col(Dg)'*col(Dg)); % optimal single step
-    else
-        tau = (xxp'*xxp)/(xxp'*(g-gp)); % BB-step
-    end
     
-    % tau = 1/mu;
+    % create acceleration vector and compute gradient from there
+    alpha = (i-1)/(i+2);
+    y = x + alpha*(x-xp);
     xp = x; % save previous solution
-    % gradient decent
-    x = x - tau*g;
-   
+    g = A(A(y,1)-b,2); % gradient
+
+    % proximal gradient steps
+    x = y - tau*g; % gradient
+    x = reshape(x,p,q,r);
+    x = ifftn(fftn(x).*filt); % proximity operation
+
     
     % projected gradient method for inequality constraints
     if opts.nonneg, x = max(real(x),0);
     elseif opts.isreal, x = real(x); end
-    if opts.max_c, x = min(x,max_v); end
-    
-    e = A(x,1)-b;  % Ax - b
-    dd = D(x);   % Dx
-    out.rel_error(i) = norm(e)/nrmb;
-    out.nrm_reg(i) = norm(dd);
-    out.obj_func(i) = mu*out.rel_error(i) + out.nrm_reg(i);
     out.rel_chg(i) = norm(x-xp)/norm(xp);
     
     % check for convergence
-    if out.rel_chg(i) < tol
-        out.rel_error = out.rel_error(1:i);
-        out.nrm_reg = out.nrm_reg(1:i);
-        out.obj_func = out.obj_func(1:i);
+    if out.rel_chg(i) < opts.tol
         out.rel_chg = out.rel_chg(1:i);
-        % fprintf('convergence tolerance achieved\n');
         break;
     end
-    % save previous values for BB step length
-    gp = g;
-    xxp = x-xp;
-    
+  
 end
-% fprintf('total iterations = %i\n\n',i);
 out.total_time = toc;
 out.iters = i;
 out.g = g;
