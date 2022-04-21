@@ -66,13 +66,13 @@ mu = opts.mu;
 % check that A* is true adjoint of A
 % check scaling of parameters, maximum constraint value, etc.
 if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
-if opts.scale_A, [A,b] = ScaleA(n,A,b); end
-[~,scl] = Scaleb(b); beta = opts.beta*scl;
+% if opts.scale_A, [A,b] = ScaleA(n,A,b); end
 [D,Dt] = get_D_Dt(k,p,q,r,opts);
 numb = numel(b);
 A = @(u,mode)l1_l1_operator(A,D,Dt,u,mode,numb,mu);
 tmp = D(zeros(p*q*r,1));
 b = mu*[b;zeros(numel(tmp),1)];
+[~,scl] = Scaleb(b); beta = opts.beta*scl;
 clear tmp;
 % sanity check
 [flg,~,~] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[n,1]);
