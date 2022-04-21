@@ -35,7 +35,7 @@ if ~isfield(opts,'init_iter')
 end
 
 if max([mm,nn,rr]) == 1
-    % basic gradient decent for initial solution
+    % basic gradient descent for initial solution
     [U,~] = basic_GD_local(A,b,p,q,r,opts.init_iter);
 else
     if mm ~= p || nn ~= q || rr ~= r
@@ -48,7 +48,6 @@ else
     end
 end
 U = U(:);
-
 
 
 % initialize multiplers                     
