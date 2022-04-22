@@ -125,6 +125,7 @@ while numel(out.rel_chg_inn) <= opts.iter
         % check inner loop convergence
         out.tau = [out.tau; tau]; 
         out.rel_chg_inn = [out.rel_chg_inn;rel_chg_inn];         
+        out.f = [out.f;sum(abs(Aub))];
         if (rel_chg_inn < tol) || numel(out.rel_chg_inn)>opts.iter, break; end    
     end
     
