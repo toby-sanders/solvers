@@ -73,7 +73,7 @@ if isfield(opts,'init')
         fprintf('User has supplied opts.init as initial guess solution!!!\n');
     end
 else
-    opts.init = 1; % initialized with single step gradient decent least squares with exact step length
+    opts.init = []; % initialized with single step gradient decent least squares with exact step length
 end
 
 

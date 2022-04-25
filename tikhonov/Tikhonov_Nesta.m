@@ -40,17 +40,29 @@ if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode);end
 [flg,~,~] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[n,1]);
 if ~flg, error('A and A* do not appear consistent'); end
 clear flg;
-
+opts = check_tik_opts(opts);
 
 % initialize out and x
 out.rel_chg = zeros(opts.iter,1);
-x = zeros(p*q*r,1);
+if ~isempty(opts.init)
+    x = opts.init(:);
+else
+    x = zeros(p*q*r,1);
+end
 
 % get the step length for the objective function
 [tau,out.tauStuff] = getStepLength(A,n);
-L = my_Fourier_filters(opts.order,opts.levels,p,q,r);
+if isfield(opts,'regV')
+    if ~isempty(opts.regV)
+        L = abs(opts.regV).^2;
+    else
+        L = my_Fourier_filters(opts.order,opts.levels,p,q,r);
+    end
+else
+    L = my_Fourier_filters(opts.order,opts.levels,p,q,r);
+end
 L = mu/tau + max(L(:)); % lipchitz constant for combined operators
-tau = 1/L;
+tau = (1/L);
 
 [D,Dt] = get_D_Dt(opts.order,p,q,r,opts);
 [flg,~,~] = check_D_Dt(D,Dt,[p,q,r]);

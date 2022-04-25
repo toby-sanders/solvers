@@ -6,6 +6,7 @@ mpathlight = mpathlight(1:slashfind(end)-1);
 % addpath('C:\Users\toby.sanders\Documents\repos\nga-fmv\BM3D');
 % addpath([mpathlight,'']);
 
+addpath([mpathlight,'/MI_base']);
 addpath([mpathlight,'/MI_base/utilities']);
 addpath([mpathlight,'/MI_base/operators']);
 

@@ -14,10 +14,12 @@ else
 end
 
 
-% if sum(abs(opts.PSD(:)))
-%     [D,Dt] = FD2D_PSD(p,q,opts.PSD);
-%     return;
-% end
+if isfield(opts,'regV')
+    if ~isempty(opts.regV)
+        [D,Dt] = penaltyFilter(opts.regV);
+        return;
+    end
+end
 
 
 if numel(k)>1
@@ -26,7 +28,6 @@ if numel(k)>1
     end
     return;
 end
-
 
 
 if opts.smooth_phase

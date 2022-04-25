@@ -1,7 +1,7 @@
 % a simple demo for using Tikhonov regularization
 
-d = 500; % signal dimension
-m = 300; % number of samples
+d = 256; % signal dimension
+m = round(2*d); % number of samples
 SNR = 50;    % SNR, with mean zero i.i.d. Gaussian noise
 rng(2022);
 
@@ -33,12 +33,17 @@ opts.tol = tik.tol;
 [rec2,out2] = Tikhonov_Nesta(A,b,[d,1,1],tik);
 [rec3,out3] = Tikhonov_prox(A,b,[d,1,1],tik);
 [rec4,out4] = PnP3_prox(A,R,b,[d,1,1],opts);
-% rtrue = ifft(fft(b)./(1+V/mu));
-% myrel(rtrue,rec0)
+
+tik.regV = my_Fourier_filters(tik.order,tik.levels,d,1,1);
+[rec5,out5] = Tikhonov_CG(A,b,[d,1,1],tik);
+
+
+
 myrel(rec0,rec)
 myrel(rec0,rec2)
 myrel(rec0,rec3)
 myrel(rec0,rec4)
+myrel(rec0,rec5)
 
 %%
 % display
