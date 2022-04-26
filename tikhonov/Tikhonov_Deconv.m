@@ -1,88 +1,75 @@
-function [x,out] = Tikhonov_Nesta(hhat,b,n,opts)
+function [x,out] = Tikhonov_Nesta(hhat,b,opts)
 
-% this version uses standard gradient descent with acceleration using the
+% a iterative deconvolution algorithm with least squares data fit term and
+% Tikhonov regularizer
+% normally, this solution can be computed with a simple Wiener filter
+% however, to enforce a nonnegativity constraint, you need to iterate
+% hence, this function exists and always implements nonnegativity
+
+
+% the iterations use standard gradient descent with acceleration using the
 % Nesterov method/heavy ball approach
 
-
-% This function solves
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% min_x    mu*||Ax-b||^2 + ||Dx||^2
-% subject to optional inequality constaints
-% using a simple steepest descent method
-% D is a finite difference operator
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% options are more or less the same as HOTV3D, see check_hotv_opts or the
-% users guide.
-
-% Fields in the opts structure (defaults are assigned for empty fields):
-% order - order of the finite difference reg. operator, D
-% iter - maximum number of iterations for CG
-% mu - regularization parameter (see formulation above)
-% tol - convergence tolerance
-% levels - default is 1, but for higher integers it uses a multiscale
-% operators for D
-
-% Written by Toby Sanders @ASU
+% Written by Toby Sanders @Magnetic Insight
 % School of Math & Stat Sciences
-% 11/1/2018
+% 4-26-2022
 
 % set image dimensions
-if numel(n)<3, n(end+1:3) = 1;
-elseif numel(n)>3, error('n can have at most 3 dimensions'); end
-p = n(1); q = n(2); r = n(3);
-n = p*q*r;
+[p,q,r] = size(hhat);
+if size(b,1)~=p || size(b,2)~=q || size(b,3)~=r
+    error('PSF and image dimensions do not match');
+end
 mu = opts.mu;
-
-% unify implementation of A
-if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode);end
-%check that A* is true adjoint of A
-[flg,~,~] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[n,1]);
-if ~flg, error('A and A* do not appear consistent'); end
-clear flg;
+if numel(mu)==1 % expand mu for each frame
+    mu = repmat(mu,r,1);
+end
 opts = check_tik_opts(opts);
+bhat = fft2(b);
+
+% create Atb and sum of hhats squared, both with mu included
+hhat2 = zeros(p,q);
+Atb = hhat2;
+for i = 1:r
+    hhat2 = hhat2 + mu(i)*abs(hhat(:,:,i)).^2;
+    Atb = Atb + mu(i)*ifft2(conj(hhat(:,:,i)).*bhat(:,:,i));
+end
 
 % initialize out and x
 out.rel_chg = zeros(opts.iter,1);
 if ~isempty(opts.init)
-    x = opts.init(:);
+    x = opts.init;
 else
-    x = zeros(p*q*r,1);
+    x = ifft2(sum(bhat.*hhat,3)./(hhat2+1)); % simple Wiener filter init
 end
 
-% get the step length for the objective function
-[tau,out.tauStuff] = getStepLength(A,n);
+% get the Fourier regularization matrix
 if isfield(opts,'regV')
     if ~isempty(opts.regV)
-        L = abs(opts.regV).^2;
+        V = abs(opts.regV).^2;
     else
-        L = my_Fourier_filters(opts.order,opts.levels,p,q,r);
+        V = my_Fourier_filters(opts.order,opts.levels,p,q,1);
     end
 else
-    L = my_Fourier_filters(opts.order,opts.levels,p,q,r);
+    V = my_Fourier_filters(opts.order,opts.levels,p,q,1);
 end
-L = mu/tau + max(L(:)); % lipchitz constant for combined operators
+% get the Lipchitz constant and corresponding gradient step length
+L = max(hhat2(:) + V(:));
 tau = (1/L);
+filt = hhat2 + V; % filter for the gradient in each iteration
 
-[D,Dt] = get_D_Dt(opts.order,p,q,r,opts);
-[flg,~,~] = check_D_Dt(D,Dt,[p,q,r]);
-if ~flg, error('D and Dt do not appear consistent'); end
-clear flg;
-
+% iterate
 xp = x;
 tic;
 for i = 1:opts.iter
     
     y = x + (i-1)/(i+2)*(x-xp); % new accerated vector
-    xp = x;
-    g = mu*(A(A(y,1)-b,2)) + Dt(D(y));
-    x = y - tau*g; % gradient descent from accelerated vector, y    
-    
-    if opts.nonneg, x = max(real(x),0);
-    elseif opts.isreal, x = real(x); end   
+    xp = x; % save old solution for next acceleration
+    g = ifft2(fft2(y).*filt) - Atb; % gradient
+    x = y - tau*g; % gradient descent from accelerated vector, y        
+    x = max(real(x),0);
     
     % check for convergence
-    out.rel_chg(i) = norm(x-xp)/norm(xp);
+    out.rel_chg(i) = sqrt(real(sum((x(:)-xp(:)).^2)/sum(x(:).^2)));
     if out.rel_chg(i) < opts.tol
         out.rel_chg = out.rel_chg(1:i);
         break;
@@ -92,5 +79,3 @@ end
 out.total_time = toc;
 out.iters = i;
 out.g = g;
-% output final solution
-x = reshape(x,p,q,r);
