@@ -69,7 +69,7 @@ end
 
 % if the user has an initial guess, store it in this option
 if isfield(opts,'init')
-    if numel(opts.init) ~= 1
+    if numel(opts.init) > 1
         fprintf('User has supplied opts.init as initial guess solution!!!\n');
     end
 else
