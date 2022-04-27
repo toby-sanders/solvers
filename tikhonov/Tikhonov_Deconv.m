@@ -39,7 +39,7 @@ out.rel_chg = zeros(opts.iter,1);
 if ~isempty(opts.init)
     x = opts.init;
 else
-    x = ifft2(sum(bhat.*hhat,3)./(hhat2+1)); % simple Wiener filter init
+    % x = max(real(ifft2(sum(bhat.*hhat,3)./(hhat2+V))),0); % simple Wiener filter init
 end
 
 % get the Fourier regularization matrix
@@ -58,11 +58,13 @@ tau = (1/L);
 filt = hhat2 + V; % filter for the gradient in each iteration
 
 % iterate
+x = max(real(ifft2(sum(bhat.*hhat,3)./(hhat2+V))),0); % simple Wiener filter init
 xp = x;
 tic;
 for i = 1:opts.iter
     
-    y = x + (i-1)/(i+2)*(x-xp); % new accerated vector
+    alpha = (i-1)/(i+2);
+    y = x + alpha*(x-xp); % new accerated vector
     xp = x; % save old solution for next acceleration
     g = ifft2(fft2(y).*filt) - Atb; % gradient
     x = y - tau*g; % gradient descent from accelerated vector, y        
@@ -74,7 +76,7 @@ for i = 1:opts.iter
         out.rel_chg = out.rel_chg(1:i);
         break;
     end
-    
+   
 end
 out.total_time = toc;
 out.iters = i;
