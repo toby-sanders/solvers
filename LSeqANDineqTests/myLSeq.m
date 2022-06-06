@@ -4,34 +4,43 @@ function [x,out] = myLSeq(A,b,C,d,opts)
 % min 0.5 ||Ax-b||^2 s.t. Cx = d
 % using a standard lagrange multiplier method
 
+% According to the first order KKT conditions, we can instead solve the
+% problem
+%       Bz = y, 
+% where
+%       B = [A^T*A  C^T ;  C   0] ,  y = [A^T*b ; d].
+% Note that B is symmetric pos. def., so we can solve this equation using a
+% conjugate gradient method directly.
 
-if ~isfield(opts,'iter'), opts.iter = 100; end
-if ~isfield(opts,'tol'), opts.tol = 1e-5; end
+% This version uses operator forms for all of the matrices, so it should in
+% priciple still work for large scale problems/operators
 
 if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
 if ~isa(C,'function_handle'), C = @(u,mode) f_handleA(C,u,mode); end
 
-beta = 1;% beta = 32/max(abs(b));
-
-
 Atb = A(b,2);
-x = zeros(size(Atb));
-lambda = zeros(size(d));
-out.rel_chg = [];
-for ii = 1:opts.iter
-    g1 = A(A(x,1),2) - Atb; % gradient over quadratic term
-    g2 = C(lambda,2);   % gradient on LM term
-    g3 = beta*C(C(x,1)-d,2);
-    g = g1+g2+g3;
-    Ag = A(g,1);
-    Cg = C(g,1);
-    % could try a BB-step
-    tau = (g'*g1 + lambda'*C(g,1))/(Ag'*Ag + beta*(Cg')*Cg); % step length
-    xp = x;
-    x = x - tau*g; % decent
-    if mod(ii,1)==0 % update LM 
-        lambda = lambda + (C(x,1)-d); 
-    end
-    out.rel_chg = [out.rel_chg;myrel(x,xp)]; 
-    if out.rel_chg(end)<opts.tol, break; end % check convergence
-end
+dimx = numel(Atb);
+
+
+
+z = [Atb;d]; % right hand side vector
+
+% operator that performs evaluation of B matrix
+B = @(x)myLMeqOperators(A,C,x,dimx);
+
+% run CG and then separate desired vector and lagrange multiplier
+x0 = my_cgsSPD(B,z,500,1e-10);
+x = x0(1:dimx);
+out.lambda = x0(dimx+1:end);
+
+
+% this function operator performs evaluation of B matrix
+function y = myLMeqOperators(A,C,x,dim1)
+
+y1 = x(1:dim1);
+y2 = x(dim1+1:end);
+y3 = A(A(y1,1),2); %AtA*x
+y4 = C(y2,2); %Ct times multiplier
+y5 = C(y1,1); % C times x
+y = cat(1,y3+y4,y5); % concatonate terms
+
