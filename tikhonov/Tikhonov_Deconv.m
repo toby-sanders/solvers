@@ -34,13 +34,8 @@ for i = 1:r
     Atb = Atb + mu(i)*ifft2(conj(hhat(:,:,i)).*bhat(:,:,i));
 end
 
-% initialize out and x
+% initialize out
 out.rel_chg = zeros(opts.iter,1);
-if ~isempty(opts.init)
-    x = opts.init;
-else
-    % x = max(real(ifft2(sum(bhat.*hhat,3)./(hhat2+V))),0); % simple Wiener filter init
-end
 
 % get the Fourier regularization matrix
 if isfield(opts,'regV')
@@ -58,16 +53,24 @@ tau = (1/L);
 filt = hhat2 + V; % filter for the gradient in each iteration
 
 % iterate
+method = 'Nest';
 x = max(real(ifft2(sum(bhat.*hhat,3)./(hhat2+V))),0); % simple Wiener filter init
-xp = x;
+xxp = x(:);gp = 0;xp = 0;
 tic;
 for i = 1:opts.iter
     
-    alpha = (i-1)/(i+2);
-    y = x + alpha*(x-xp); % new accerated vector
-    xp = x; % save old solution for next acceleration
-    g = ifft2(fft2(y).*filt) - Atb; % gradient
-    x = y - tau*g; % gradient descent from accelerated vector, y        
+    if strcmp(method,'Nest')
+        alpha = (i-1)/(i+2);
+        y = x + alpha*(x-xp); % new accerated vector
+        xp = x; % save old solution for next acceleration
+        g = ifft2(fft2(y).*filt) - Atb; % gradient
+        x = y - tau*g; % gradient descent from accelerated vector, y        
+    else
+        g = ifft2(fft2(x).*filt) - Atb; % gradient
+        tau = (xxp'*xxp)/(xxp'*(g(:)-gp(:))); % BB-step
+        xp = x;
+        x = x - tau*g;
+    end
     x = max(real(x),0);
     
     % check for convergence
@@ -76,7 +79,9 @@ for i = 1:opts.iter
         out.rel_chg = out.rel_chg(1:i);
         break;
     end
-   
+    
+    gp = g;
+    xxp = x(:) - xp(:);
 end
 out.total_time = toc;
 out.iters = i;

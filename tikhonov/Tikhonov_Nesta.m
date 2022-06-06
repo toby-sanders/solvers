@@ -87,6 +87,11 @@ for i = 1:opts.iter
         out.rel_chg = out.rel_chg(1:i);
         break;
     end
+    if opts.disp
+        figure(6);imagesc(reshape(x,p,q,r));colorbar;
+        title(i);
+        colorbar;
+    end
     
 end
 out.total_time = toc;

@@ -1,40 +1,71 @@
 % To run all of the algorithms in this package, add the folders to the MATLAB
 % paths. One should just add these paths into the MATLAB startup.m file.
-
-mpathlight = 'C:\Users\toby.sanders\Dropbox\TobySharedMATLAB';
+mpathlight = pwd;
+slashfind = strfind(mpathlight,filesep);
+mpathlight = mpathlight(1:slashfind(end)-1);
 % rmpath('C:\Users\toby.sanders\Documents\repos\nga-fmv\BM3D');
-rmpath([mpathlight,'']);
-rmpath([mpathlight,'/TobyShared/solvers/DenoisingEngines/BM3D']);
-rmpath([mpathlight,'/TobyShared/solvers/DenoisingEngines/BM3D/bm3d']);
-rmpath([mpathlight,'/TobyShared/solvers']);
-rmpath([mpathlight,'/TobyShared/solvers/DenoisingEngines']);
-rmpath([mpathlight,'/TobyShared/solvers/DenoisingEngines/TNRD']);
-% rmpath([mpathlight,'/TobyShared/solvers/DenoisingEngines/LTBM3D']);
-rmpath([mpathlight,'/LTBM3D/waveTransforms2D']);
-rmpath([mpathlight,'/LTBM3D/waveTransforms3D']);
-rmpath([mpathlight,'/LTBM3D/utilities']);
-rmpath([mpathlight,'/LTBM3D/source']);
-rmpath([mpathlight,'/LTBM3D/waveletFilters']);
+% rmpath([mpathlight,'']);
 
-rmpath([mpathlight,'/TobyShared/solvers/L1']);
-rmpath([mpathlight,'/TobyShared/solvers/RL']);
-rmpath([mpathlight,'/TobyShared/solvers/L1/utilities']);
-rmpath([mpathlight,'/TobyShared/solvers/L1/Transforms']);
-rmpath([mpathlight,'/TobyShared/solvers/L1/Transforms/multiscale']);
-rmpath([mpathlight,'/TobyShared/solvers/L1/Transforms/wave_shear']);
-rmpath([mpathlight,'/TobyShared/solvers/L1/joint']);
-rmpath([mpathlight,'/TobyShared/solvers/L1/inpaint']);
-rmpath([mpathlight,'/TobyShared/solvers/L2']);
-rmpath([mpathlight,'/TobyShared/solvers/tikhonov']);
-rmpath([mpathlight,'/TobyShared/solvers/parm_selection']);
-rmpath([mpathlight,'/TobyShared/solvers/parm_selection/Skeel']);
+rmpath([mpathlight,'/MI_base']);
+rmpath([mpathlight,'/MI_base/utilities']);
+rmpath([mpathlight,'/MI_base/operators']);
 
-rmpath([mpathlight,'/TobyShared/utilities']);
-rmpath([mpathlight,'/TobyShared/utilities/MRCreading']);
-rmpath([mpathlight,'/TobyShared/utilities/ShearLab3Dv10/ShearLab3Dv10/2D'])
-rmpath([mpathlight,'/TobyShared/utilities/ShearLab3Dv10/ShearLab3Dv10/3D'])
-rmpath([mpathlight,'/TobyShared/utilities/ShearLab3Dv10/ShearLab3Dv10/Util'])
-rmpath([mpathlight,'/TobyShared/utilities/ShearLab3Dv10/ShearLab3Dv10'])
+rmpath([mpathlight,'/Deblur/PSFs']);
+rmpath([mpathlight,'/Deblur/Operators']);
+rmpath([mpathlight,'/Deblur/SURE']);
+% rmpath([mpathlight,'/Deblur/MFBD']);
+
+%%% No longer need these denoising engines... 
+% rmpath([mpathlight,'/solvers/DenoisingEngines/BM3D']);
+% rmpath([mpathlight,'/solvers/DenoisingEngines/BM3D/bm3d']);
+% rmpath([mpathlight,'/solvers']);
+% rmpath([mpathlight,'/solvers/DenoisingEngines']);
+% rmpath([mpathlight,'/solvers/DenoisingEngines/TNRD']);
+% rmpath([mpathlight,'/solvers/DenoisingEngines/GBM3D']);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GBM3D functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+rmpath([mpathlight,'/GBM3D/waveTransforms2D']);
+rmpath([mpathlight,'/GBM3D/waveTransforms3D']);
+rmpath([mpathlight,'/GBM3D/utilities']);
+rmpath([mpathlight,'/GBM3D/source']);
+rmpath([mpathlight,'/GBM3D/MilinfarEnhance']);
+% rmpath([mpathlight,'/GBM3D/waveletFilters']);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% plug and play prior algorithms
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+rmpath([mpathlight,'/PnP/source']);
+rmpath([mpathlight,'/PnP/utilities']);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% L1-L2 optimization solvers
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+rmpath([mpathlight,'/solvers/L1']);
+rmpath([mpathlight,'/solvers/RL']);
+rmpath([mpathlight,'/solvers/L1/utilities']);
+rmpath([mpathlight,'/solvers/L1/Transforms']);
+rmpath([mpathlight,'/solvers/L1/Transforms/multiscale']);
+rmpath([mpathlight,'/solvers/L1/Transforms/wave_shear']);
+rmpath([mpathlight,'/solvers/L1/joint']);
+rmpath([mpathlight,'/solvers/L1/inpaint']);
+rmpath([mpathlight,'/solvers/L2']);
+rmpath([mpathlight,'/solvers/tikhonov']);
+rmpath([mpathlight,'/solvers/parm_selection']);
+rmpath([mpathlight,'/solvers/parm_selection/Skeel']);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% utilities, tomography, radar, etc.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+rmpath([mpathlight,'/utilities']);
+% rmpath([mpathlight,'/utilities/MRCreading']);
+% rmpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10/2D'])
+% rmpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10/3D'])
+% rmpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10/Util'])
+% rmpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10'])
 
 rmpath([mpathlight,'/SandBox/tomography']);
 rmpath([mpathlight,'/SandBox/tomography/Align'])
@@ -83,5 +114,6 @@ rmpath([irtdir 'wls']);		% weighted least-squares (WLS) estimates
 clear mainpath;
 clear irtdir;
 clear mpathlight;
+clear slashfind;
 
-fprintf('WELCOME!  Lets do work!!! :)\n')
+fprintf('WELCOME! :)\n')
