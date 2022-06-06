@@ -1,7 +1,7 @@
 % testing to minimize ||Ax-b||^2 subject to Cx-d>=0
 d = 200; % signal dimension, x
-m = 100; % number of least squares terms/rows in A
-c = 100; % number of inequality constraints
+m = 300; % number of least squares terms/rows in A
+c = 50; % number of inequality constraints
 rng(321);
 opts.iter = 1000;
 opts.tol = 1e-8;
@@ -23,10 +23,10 @@ catch
     matOptBox = false;
 end
 tic;
-[Mx,out] = myLSineq(A,b,C,dv,opts);
+[Mx,out] = myLSineqOpers(A,b,C,dv,opts);
 t2 = toc;
 tic;
-[Mx2,out2] = myLSineqExact(A,b,C,dv,opts);
+[Mx2,out2] = myLSineq(A,b,C,dv,opts);
 t3 = toc;
 % xx = linespace(-1,1,100);
 % [X,Y] = meshgrid(xx,xx);
@@ -88,5 +88,4 @@ else
 end
 subplot(2,2,4);hold off;
 plot(out.lambda,'x');title('LM recovered');hold on;
-plot(out2.mu,'o');
 hold off;
