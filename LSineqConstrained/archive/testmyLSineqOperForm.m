@@ -1,9 +1,10 @@
 % testing to minimize ||Ax-b||^2 subject to Cx-d>=0
+clear;
 d = 200; % signal dimension, x
 m = 300; % number of least squares terms/rows in A
 c = 50; % number of inequality constraints
 rng(321);
-opts.iter = 1000;
+opts.iter = 10000;
 opts.tol = 1e-8;
 
 % randomly generate A, b, C, and D
@@ -12,7 +13,7 @@ C = rand(c,d);
 b = rand(m,1);
 dv = rand(c,1);
 
-% solve LS inequality contraint problem with Matlabs lsqlin and my solvers]
+% solve LS inequality contraint problem with Matlabs lsqlin and my solvers
 try
     tic;
     xM = lsqlin(A,b,-C,-dv,[],[]);
@@ -65,8 +66,8 @@ if matOptBox
     hold off;
 else
     subplot(2,2,1);hold off;
-    plot(Mx,'o');hold off;
-    plot(Mx2,'o');
+    plot(Mx,'o');hold on;
+    plot(Mx2,'x');hold off;
     legend('me');title('values of soln');
     hold off;
 end
