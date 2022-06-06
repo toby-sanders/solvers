@@ -7,28 +7,32 @@ function [x,out] = myLSineq(A,b,C,d,opts)
 
 if ~isfield(opts,'iter'), opts.iter = 100; end
 if ~isfield(opts,'tol'), opts.tol = 1e-5; end
+if ~isfield(opts,'LMupdate'), opts.LMupdate = 10; end
 
-% if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
-% if ~isa(C,'function_handle'), C = @(u,mode) f_handleA(C,u,mode); end
+if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
+if ~isa(C,'function_handle'), C = @(u,mode) f_handleA(C,u,mode); end
 
-beta = 0;% beta = 32/max(abs(b));
 gam = .01; % step size for LM update
 
-Atb = A'*b;% A(b,2);
+Atb = A(b,2);
 x = zeros(size(Atb));
 lambda = zeros(size(d));
 out.rel_chg = [];
 g2 = 0;
-AtA = A'*A;
+% AtA = A'*A;
 for ii = 1:opts.iter
-    g1 = AtA*x - Atb;% A'*(A*x) - Atb; % gradient over quadratic term   
+    % gradient over quadratic term   
+    g1 = A(A(x,1),2) - Atb;
     g = g1+g2;
     
     % get step length, tau
-    if ii~=0% mod(ii-1,10)==0
-        Ag = A*g;
-        Cg = C*g;
+    if ii==1 
+        Ag = A(g,1);
+        Cg = C(g,1);
         tau = (g'*g1 + lambda'*Cg)/(Ag'*Ag); % step length
+        if isnan(tau)
+            tau = 1e-5;
+        end
     else % bb-step
         st = x-xp;
         yp = g-gp;
@@ -39,16 +43,24 @@ for ii = 1:opts.iter
     gp = g;
     x = x - tau*g; % descent
 
-
     % Lagrange multiplier update 
     % multipliers for positive inequality contraint are non-positive
-    if mod(ii,10)==0 
-        lambda = lambda + gam*(C*x-d); 
+    if mod(ii,opts.LMupdate)==0 
+        lambda = lambda + gam*(C(x,1)-d);% gam*(C*x-d); 
         lambda = min(lambda,0); 
 
-        g2 = C'*lambda;   % update gradient on LM term
+        g2 = C(lambda,2);% C'*lambda;   % update gradient on LM term
     end
     out.rel_chg = [out.rel_chg;myrel(x,xp)]; 
-    if out.rel_chg(end)<opts.tol, break; end % check convergence
+
+    if ii>50 % check convergence
+        if out.rel_chg(end)<opts.tol
+            out.lambda = lambda;
+            return;
+        end
+    end
 end
 out.lambda = lambda;
+
+
+

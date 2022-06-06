@@ -1,8 +1,8 @@
 % testing to minimize ||Ax-b||^2 subject to Cx-d>=0
 d = 200; % signal dimension, x
-m = 100; % number of least squares terms/rows in A
-c = 100; % number of inequality constraints
-e = 100; % number of equality contraints
+m = 500; % number of least squares terms/rows in A
+c = 50; % number of inequality constraints
+e = 0; % number of equality contraints
 rng(321);
 opts.iter = 10000;
 opts.tol = 1e-8;
@@ -15,17 +15,18 @@ dv = rand(c,1);
 E = rand(e,d);
 ev = rand(e,1);
 
-tic;
+
 [x,out] = myLSineq2(A,b,E,ev,C,dv,opts);
-t2 = toc;
+[x2,out2] = myLSineq(A,b,C,dv,opts);
 
-
-
-ineqE = C*x-d;
-
+%%
+ineqE = C*x-dv;
+ineqE2 = C*x2-dv;
 figure(23);tiledlayout(2,2);
-nexttile;
-plot(ineqE);
+nexttile;hold off;
+plot(ineqE,'o');hold on;
+plot(ineqE2,'x');
+plot(out.activeIneqs,'*');hold off;
 nexttile;
 plot(out.x0);
 nexttile;

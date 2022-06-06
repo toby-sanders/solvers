@@ -1,9 +1,10 @@
 % testing to minimize ||Ax-b||^2 subject to Cx-d>=0
+clear;
 d = 200; % signal dimension, x
-m = 100; % number of least squares terms/rows in A
+m =300; % number of least squares terms/rows in A
 c = 100; % number of inequality constraints
 rng(321);
-opts.iter = 1000;
+opts.iter = 10000;
 opts.tol = 1e-8;
 
 % randomly generate A, b, C, and D
@@ -25,15 +26,12 @@ end
 tic;
 [Mx,out] = myLSineq(A,b,C,dv,opts);
 t2 = toc;
-tic;
-[Mx2,out2] = myLSineqExact(A,b,C,dv,opts);
-t3 = toc;
+
 % xx = linespace(-1,1,100);
 % [X,Y] = meshgrid(xx,xx);
 
 % compute inequality errors
 v11 = norm(min(C*Mx - dv,0));% myrel(C*Mx,dv);
-v12 = norm(min(C*Mx2 - dv,0));% myrel(C*Mx,dv);
 if matOptBox
     v22 = norm(min(C*xM - dv,0));% myrel(C*xM,dv);
     v2 = A*xM-b;
@@ -42,10 +40,8 @@ end
 
 % compute objective function values
 v1 = A*Mx-b;
-v10 = A*Mx2-b;
-
 v1 = v1'*v1;
-v10 = v10'*v10;
+
 
 
 %%
@@ -54,7 +50,6 @@ if matOptBox
     fprintf('MATLAB, constraint error: %g, L2 norm: %g, time: %g\n',v22,v2,t1);
 end
 fprintf('MYver, constraint error: %g, L2 norm: %g, time: %g\n',v11,v1,t2);
-fprintf('MYver exact, constraint error: %g, L2 norm: %g, time: %g\n',v12,v10,t3);
 figure(99);
 if matOptBox
     subplot(2,2,1);hold off;
@@ -65,8 +60,7 @@ if matOptBox
     hold off;
 else
     subplot(2,2,1);hold off;
-    plot(Mx,'o');hold off;
-    plot(Mx2,'o');
+    plot(Mx,'o');hold on;
     legend('me');title('values of soln');
     hold off;
 end
@@ -84,9 +78,10 @@ else
     % plot(C*xM-dv,'x');hold on;
     plot(C*Mx-dv,'o');hold on;
     plot(out.lambda,'*');hold off;
-    legend('me','LM values');title('inequ cond');
+    legend('Cx-d','LM values');title('inequ cond');
 end
 subplot(2,2,4);hold off;
-plot(out.lambda,'x');title('LM recovered');hold on;
-plot(out2.mu,'o');
-hold off;
+scatter(C*Mx-dv,out.lambda);
+xlabel('inequality contraint values');
+ylabel('LM values');
+title('demonstration of active vs inactive constraints');

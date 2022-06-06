@@ -43,10 +43,11 @@ B = @(x)myLMineqOperators(A,E,C,x,dimx,dime,dimd,activeIneqs);
 z = [Atb;e;d(activeIneqs)];
 
 
-[x2,out.GD] = basic_GD_local(B,z,500,dimx+dime);
+[x2,out.GD] = basic_GD_local(B,z,5000,dimx+dime);
 x = x2(1:dimx);
 out.lambda = x0(dimx+1:dimx+dime);
 out.mu = x0(dimx+dime+1:end);
+out.activeIneqs = activeIneqs;
 
 
 
@@ -92,7 +93,7 @@ out.rel_chg = zeros(iter,1);
 for i = 1:iter
     r = b - A(x);
     gam = r'*r/(r'*A(r));
-    x = x + gam*r/2;
+    x = x + gam*r;
     x(dim0+1:end) = min(x(dim0+1:end),0);
     out.rel_chg(i) = sum(abs(gam*r(:)))/sum(abs(x(:)));
 end
