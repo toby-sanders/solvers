@@ -30,7 +30,7 @@ for ii = 1:opts.iter
     g = g1+g2+g3;
     
     % get step length, tau
-    if ii==1 
+    if ii~=0% ii==1 
         Ag = A(g,1);
         Eg = E(g,1);
         Cg = C(g,1);
