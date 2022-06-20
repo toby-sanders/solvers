@@ -55,7 +55,8 @@ addpath([mpathlight,'/solvers/L1/inpaint']);
 addpath([mpathlight,'/solvers/L2']);
 addpath([mpathlight,'/solvers/tikhonov']);
 addpath([mpathlight,'/solvers/parm_selection']);
-addpath([mpathlight,'/solvers/parm_selection/Skeel']);
+addpath([mpathlight,'/solvers/LSineqConstrained']);
+% addpath([mpathlight,'/solvers/parm_selection/Skeel']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % utilities, tomography, radar, etc.

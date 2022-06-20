@@ -35,7 +35,7 @@ Sx(indDel) = ''; % delete the zero point
 Sx2(indDel) = '';
 
 % inequality (C) and equality (E) operators
-C = @(U,mode)CombinedIneq(U,mode,Sz,d1,d2);
+C = @(U,mode)CombinedIneq(U,mode,Sx0,Sz,d1,d2);
 E = @(U,mode)CombinedEqOper(U,mode,Sz2,Sx,Sx2,d1,d2);
 
 % flg1 = check_D_Dt(@(U)E(U,1),@(U)E(U,2),[d1,d2])
@@ -54,10 +54,11 @@ mu = C(x,1);
 out.rel_chg = [];
 g2 = 0;
 g3 = 0;
+beta = 1e-3;
 % AtA = A'*A;
 for ii = 1:opts.iter
     % gradient over quadratic term   
-    g1 = A(A(x,1),2) - Atb;
+    g1 = A(A(x,1),2) - Atb + beta*E(E(x,1),2);
     g = g1+g2+g3;
     
     % get step length, tau
@@ -65,7 +66,7 @@ for ii = 1:opts.iter
         Ag = A(g,1);
         Eg = E(g,1);
         Cg = C(g,1);
-        tau = (g'*g1 + lambda'*Eg + mu'*Cg)/(Ag'*Ag); % step length
+        tau = (g'*g1 + lambda'*Eg + mu'*Cg)/(Ag'*Ag + beta*Eg'*Eg); % step length
         if isnan(tau)
             tau = 1e-5;
         end
@@ -85,7 +86,7 @@ for ii = 1:opts.iter
     % Lagrange multiplier update 
     % multipliers for positive inequality contraint are non-positive
     if mod(ii,opts.LMupdate)==0 
-        lambda = lambda + gam*(E(x,1));% gam*(C*x-d); 
+        lambda = lambda + beta*(E(x,1));% gam*(C*x-d); 
         mu = mu + gam*(C(x,1));
         mu = min(mu,0);
 
@@ -108,8 +109,8 @@ out.ineq = C(x,1);
 out.ineq1 = out.ineq(1:d1*d2);
 cnt = d1*d2;
 out.ineq2 = reshape(out.ineq(cnt+1:cnt+(numel(Sz)-1)*d1),d1,numel(Sz)-1);
-% cnt = cnt+(numel(Sz)-1)*d1;
-% out.ineq3 = reshape(out.ineq(cnt+1:cnt+(numel(Sx)-1)*numel(Sz)),numel(Sx)-1,numel(Sz));
+cnt = cnt+(numel(Sz)-1)*d1;
+out.ineq3 = reshape(out.ineq(cnt+1:cnt+(numel(Sx)-1)*numel(Sz)),numel(Sx)-1,numel(Sz));
 out.eqVals = E(x,1);
 
 
@@ -136,7 +137,7 @@ out.eqVals = E(x,1);
 
 
 
-function y = CombinedIneq(U,mode,Sz,d1,d2)
+function y = CombinedIneq(U,mode,Sx,Sz,d1,d2)
 switch mode
     case 1 % forward
         % forward operation for the inequality contraints   
@@ -147,7 +148,7 @@ switch mode
         y2 = -(U(:,Sz(1)+1:end)-U(:,Sz(1):end-1));
     
         % negative derivative along the x-axis for values x>=0, z>=0
-        y3 = [];% -(U(Sx(1)+1:end,Sz)-U(Sx(1):end-1,Sz));
+        y3 = -(U(Sx(1)+1:end,Sz)-U(Sx(1):end-1,Sz));
         
         % concatonate the three terms into single vector
         y = cat(1,y1,y2(:),y3(:));
@@ -158,7 +159,7 @@ switch mode
         % initialize last two terms. Add a small buffer to simplify the
         % derivative term. The extra dimension will vanish after taking derv.
         y2 = zeros(d1,d2+1);
-        % y3 = zeros(d1+1,d2);
+        y3 = zeros(d1+1,d2);
     
         % populate y2 with appropriate values in y, then take derivative along
         % the z-axis
@@ -167,11 +168,10 @@ switch mode
         y2 = y2(:,2:end) - y2(:,1:end-1);
         
         % same as y2, now along the x-axis and only for x>=0, z>=0
-        % cnt = cnt+(numel(Sz)-1)*d1;
-        % y3(Sx(2:end),Sz) = reshape(U(cnt+1:cnt+(numel(Sx)-1)*numel(Sz)),numel(Sx)-1,numel(Sz));
-        % y3 = y3(2:end,:) - y3(1:end-1,:);
-        y3 = 0;
-
+        cnt = cnt+(numel(Sz)-1)*d1;
+        y3(Sx(2:end),Sz) = reshape(U(cnt+1:cnt+(numel(Sx)-1)*numel(Sz)),numel(Sx)-1,numel(Sz));
+        y3 = y3(2:end,:) - y3(1:end-1,:);
+        
         y = y1(:) + y2(:) + y3(:);
 end
 
