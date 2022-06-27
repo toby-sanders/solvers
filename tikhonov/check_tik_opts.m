@@ -34,7 +34,7 @@ end
 
 % Display option
 if ~isfield(opts,'disp')
-    opts.disp = true;
+    opts.disp = false;
 end
 
 % mu is generally the most important parameter
