@@ -59,7 +59,7 @@ else
     plot(Mx,'o');hold on;
     plot(Mx2,'x');
     hold off;
-    legend('CG solver''gradient solver')
+    legend('CG solver','gradient solver')
     title('recovered values')
 end
 subplot(2,2,2);semilogy(out.rel_chg);title('convergence of gradient solver')
@@ -68,4 +68,4 @@ semilogy(abs(C*Mx-dv));hold on;
 semilogy(abs(C*Mx2-dv));
 hold off;
 title('zero equality contraint values');
-legend('CG solver''gradient solver')
+legend('CG solver','gradient solver')

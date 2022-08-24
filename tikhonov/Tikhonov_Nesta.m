@@ -73,7 +73,7 @@ xp = x;
 tic;
 for i = 1:opts.iter
     
-    y = x + (i-1)/(i+2)*(x-xp); % new accerated vector
+    y = x + (i-1)/(i+2)*(x-xp); % new accelerated vector
     xp = x;
     g = mu*(A(A(y,1)-b,2)) + Dt(D(y));
     x = y - tau*g; % gradient descent from accelerated vector, y    

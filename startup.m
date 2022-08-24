@@ -9,6 +9,7 @@ mpathlight = mpathlight(1:slashfind(end)-1);
 addpath([mpathlight,'/MI_base']);
 addpath([mpathlight,'/MI_base/utilities']);
 addpath([mpathlight,'/MI_base/operators']);
+addpath([mpathlight,'/MI_base/functions']);
 
 addpath([mpathlight,'/Deblur/PSFs']);
 addpath([mpathlight,'/Deblur/Operators']);
@@ -62,6 +63,7 @@ addpath([mpathlight,'/solvers/LSineqConstrained']);
 % utilities, tomography, radar, etc.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 addpath([mpathlight,'/utilities']);
+addpath([mpathlight,'/utilities/nrrd_read_write_rensonnet']);
 % addpath([mpathlight,'/utilities/MRCreading']);
 % addpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10/2D'])
 % addpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10/3D'])
