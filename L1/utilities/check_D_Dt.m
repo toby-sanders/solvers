@@ -7,10 +7,10 @@ function [flg,x,y] = check_D_Dt(D,Dt,N)
 % Check if Dt is the adjoint of D
 % If it is the true adjoint, then we should have x=y
 % flg returns true if Dt is true adjoint and false otherwise
-u = rand(N) + 1i*rand(N);
+u = rand(N);% + 1i*rand(N);
 Du = D(u);
 
-v = rand(size(Du)) + 1i*rand(size(Du));
+v = rand(size(Du));%  + 1i*rand(size(Du));
 
 Dtv = Dt(v);
 

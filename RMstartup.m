@@ -9,6 +9,7 @@ mpathlight = mpathlight(1:slashfind(end)-1);
 rmpath([mpathlight,'/MI_base']);
 rmpath([mpathlight,'/MI_base/utilities']);
 rmpath([mpathlight,'/MI_base/operators']);
+rmpath([mpathlight,'/MI_base/functions']);
 
 rmpath([mpathlight,'/Deblur/PSFs']);
 rmpath([mpathlight,'/Deblur/Operators']);
@@ -55,12 +56,14 @@ rmpath([mpathlight,'/solvers/L1/inpaint']);
 rmpath([mpathlight,'/solvers/L2']);
 rmpath([mpathlight,'/solvers/tikhonov']);
 rmpath([mpathlight,'/solvers/parm_selection']);
-rmpath([mpathlight,'/solvers/parm_selection/Skeel']);
+rmpath([mpathlight,'/solvers/LSineqConstrained']);
+% rmpath([mpathlight,'/solvers/parm_selection/Skeel']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % utilities, tomography, radar, etc.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 rmpath([mpathlight,'/utilities']);
+rmpath([mpathlight,'/utilities/nrrd_read_write_rensonnet']);
 % rmpath([mpathlight,'/utilities/MRCreading']);
 % rmpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10/2D'])
 % rmpath([mpathlight,'/utilities/ShearLab3Dv10/ShearLab3Dv10/3D'])
@@ -116,4 +119,4 @@ clear irtdir;
 clear mpathlight;
 clear slashfind;
 
-fprintf('WELCOME! :)\n')
+fprintf('paths removed\n');

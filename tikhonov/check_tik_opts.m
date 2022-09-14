@@ -70,7 +70,7 @@ end
 % if the user has an initial guess, store it in this option
 if isfield(opts,'init')
     if numel(opts.init) > 1
-        fprintf('User has supplied opts.init as initial guess solution!!!\n');
+        % fprintf('User has supplied opts.init as initial guess solution!!!\n');
     end
 else
     opts.init = []; % initialized with single step gradient decent least squares with exact step length

@@ -44,6 +44,7 @@ opts = check_tik_opts(opts);
 
 % initialize out and x
 out.rel_chg = zeros(opts.iter,1);
+out.objF = [];
 if ~isempty(opts.init)
     x = opts.init(:);
 else
@@ -88,9 +89,28 @@ for i = 1:opts.iter
         break;
     end
     if opts.disp
-        figure(6);imagesc(reshape(x,p,q,r));colorbar;
+        Axb = A(x,1)-b;Axb = mu*Axb(:)'*Axb(:);
+        Dx = D(x);Dx = Dx(:)'*Dx(:);
+        objF = Axb + Dx;
+        out.objF = [out.objF;objF,Axb,Dx];
+        figure(6);
+        tiledlayout(2,2);
+        nexttile;imagesc(reshape(x,p,q,r));colorbar;
         title(i);
         colorbar;
+        nexttile;
+        semilogy(out.rel_chg);
+        ylabel('relative change');
+        xlabel('iteration');title('convergence');
+        nexttile;
+        semilogy(out.objF(:,1));
+        ylabel('objective function');
+        xlabel('iteration');title('convergence');
+        nexttile;hold off;
+        semilogy(out.objF(:,2));hold on;
+        semilogy(out.objF(:,3));hold off;
+        legend('||Axb||','||Dx||');hold off;
+        xlabel('iteration');title('convergence');
     end
     
 end
