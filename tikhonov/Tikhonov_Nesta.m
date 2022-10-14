@@ -37,9 +37,11 @@ mu = opts.mu;
 % unify implementation of A
 if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode);end
 %check that A* is true adjoint of A
-[flg,~,~] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[n,1]);
-if ~flg, error('A and A* do not appear consistent'); end
-clear flg;
+[flg,rel_diff] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[n,1]);
+if ~flg
+    error('A and A* operator mismatch.\n Rel. difference in test was %g',rel_diff); 
+end
+clear flg rel_diff;
 opts = check_tik_opts(opts);
 
 % initialize out and x
@@ -66,8 +68,8 @@ L = mu/tau + max(L(:)); % lipchitz constant for combined operators
 tau = (1/L);
 
 [D,Dt] = get_D_Dt(opts.order,p,q,r,opts);
-[flg,~,~] = check_D_Dt(D,Dt,[p,q,r]);
-if ~flg, error('D and Dt do not appear consistent'); end
+[flg,~] = check_D_Dt(D,Dt,[p,q,r]);
+if ~flg, error('D and Dt operator mismatch'); end
 clear flg;
 
 xp = x;

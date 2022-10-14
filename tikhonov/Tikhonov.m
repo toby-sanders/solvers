@@ -27,7 +27,7 @@ opts = check_tik_opts(opts);
 
 if opts.nonneg 
     % warning('implementation of nonnegativity constraint is slower');
-    [x,out] = Tikhonov_SD(A,b,n,opts);
+    [x,out] = Tikhonov_Nesta(A,b,n,opts);
 else
     [x,out] = Tikhonov_CG(A,b,n,opts);
 end

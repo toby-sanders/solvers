@@ -10,6 +10,8 @@ addpath([mpathlight,'/MI_base']);
 addpath([mpathlight,'/MI_base/utilities']);
 addpath([mpathlight,'/MI_base/operators']);
 addpath([mpathlight,'/MI_base/functions']);
+addpath([mpathlight,'/MI_base/signalOperators']);
+addpath([mpathlight,'/MI_base/PSFs']);
 
 addpath([mpathlight,'/Deblur/PSFs']);
 addpath([mpathlight,'/Deblur/Operators']);

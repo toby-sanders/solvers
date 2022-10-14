@@ -1,4 +1,4 @@
-function [flg,x,y] = check_D_Dt(D,Dt,N)
+function [flg,rel_diff] = check_D_Dt(D,Dt,N)
 
 % Written by Toby Sanders @ASU
 % School of Math & Stat Sciences
@@ -19,5 +19,6 @@ y = sum(u(:).*conj(Dtv(:)));
 
 tol = 1e-2;
 
-flg = abs(x-y)/abs(x)<tol;
+rel_diff = abs(x-y)/abs(x);
+flg = rel_diff<tol;
 
