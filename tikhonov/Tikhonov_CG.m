@@ -31,19 +31,42 @@ p = n(1); q = n(2); r = n(3);
 if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
 % if opts.scale_A, [A,b] = ScaleA(p*q*r,A,b); end
 [D,Dt] = get_D_Dt(opts.order,p,q,r,opts);
-B = @(x)A(A(x,1),2) + Dt(D(x))/opts.mu;
-c = A(b,2);
+
+
+if opts.A2
+    B = @(x)A(x) + Dt(D(x))/opts.mu;
+    c = b;
+else
+    B = @(x)A(A(x,1),2) + Dt(D(x))/opts.mu;
+    c = A(b,2);
+end
+
+x0 = zeros(size(c));
+
+if opts.gpu
+    c = gpuArray(single(c));
+    x0 = gpuArray(single(x0));
+end
+
+
+
 tic;
-[U,out] = my_local_cgs(B,c,opts.iter,opts.tol);
+[U,out] = my_local_cgs(B,c,opts.iter,opts.tol,x0);
 out.total_time = toc;
 U = reshape(U,p,q,r);
-out.rel_error = norm(A(U(:),1)-b)/norm(b);
+% out.rel_error = norm(A(U(:),1)-b)/norm(b);
 out.Du = norm(D(U(:)))^2;
 
-function [x,out] = my_local_cgs(A,b,iter,tol)
+
+
+
+
+
+
+function [x,out] = my_local_cgs(A,b,iter,tol,x)
 % CG algorithm from wiki
 
-x = zeros(size(b));
+% x = zeros(size(b));
 out = [];
 r = b-A(x);
 p = r;

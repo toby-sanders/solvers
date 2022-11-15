@@ -166,6 +166,12 @@ elseif round(opts.levels)~=opts.levels || opts.levels < 1
     error('opts.levels should be a positive integer');
 end
 
+if ~isfield(opts,'gpu')
+    opts.gpu = false;
+end
+if ~isfield(opts,'A2')
+    opts.A2 = false;
+end
 
 opts.reweighted_TV = false;
 

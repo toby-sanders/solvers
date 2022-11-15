@@ -28,6 +28,7 @@ function [x,out] = Tikhonov_Nesta(A,b,n,opts)
 % 11/1/2018
 
 % set image dimensions
+opts = check_tik_opts(opts);
 if numel(n)<3, n(end+1:3) = 1;
 elseif numel(n)>3, error('n can have at most 3 dimensions'); end
 p = n(1); q = n(2); r = n(3);
@@ -35,14 +36,23 @@ n = p*q*r;
 mu = opts.mu;
 
 % unify implementation of A
-if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode);end
-%check that A* is true adjoint of A
-[flg,rel_diff] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[n,1]);
-if ~flg
-    error('A and A* operator mismatch.\n Rel. difference in test was %g',rel_diff); 
+if ~opts.A2
+    if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode);end
+    %check that A* is true adjoint of A
+    [flg,rel_diff] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[n,1]);
+    if ~flg
+        error('A and A* operator mismatch.\n Rel. difference in test was %g',rel_diff); 
+    end
+    clear flg rel_diff;
+    AtA =  @(x)A(A(x,1),2);
+    b = A(b,2);
+else % case the operator AtA is input
+    % in this case, the data vector, b, should actually be A^T*b
+    if numel(b)~=p*q*r
+        error('if A^T*A is input, data vector b should be A^T*b');
+    end
+    AtA = A;
 end
-clear flg rel_diff;
-opts = check_tik_opts(opts);
 
 % initialize out and x
 out.rel_chg = zeros(opts.iter,1);
@@ -54,7 +64,7 @@ else
 end
 
 % get the step length for the objective function
-[tau,out.tauStuff] = getStepLength(A,n);
+[tau,out.tauStuff] = getStepLength_SPD(AtA,n);
 if isfield(opts,'regV')
     if ~isempty(opts.regV)
         L = abs(opts.regV).^2;
@@ -78,7 +88,7 @@ for i = 1:opts.iter
     
     y = x + (i-1)/(i+2)*(x-xp); % new accelerated vector
     xp = x;
-    g = mu*(A(A(y,1)-b,2)) + Dt(D(y));
+    g = mu*(AtA(y) - b) + Dt(D(y));
     x = y - tau*g; % gradient descent from accelerated vector, y    
     
     if opts.nonneg, x = max(real(x),0);
