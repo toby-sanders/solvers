@@ -33,7 +33,7 @@ if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
 [D,Dt] = get_D_Dt(opts.order,p,q,r,opts);
 
 
-if opts.A2
+if nargin(A)==1
     B = @(x)A(x) + Dt(D(x))/opts.mu;
     c = b;
 else
