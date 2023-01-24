@@ -46,6 +46,7 @@ if isfield(opts,'mu')
     end
 else
     %default mu
+    warning('important mu parameter was not set');
     opts.mu = 1;
 end
 

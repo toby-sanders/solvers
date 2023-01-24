@@ -89,7 +89,7 @@ if ~sum(strcmp(opts.mode,{'Fourier','deconv'}))
     % check that A* is true adjoint of A
     % check scaling of parameters, etc.
     if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
-    [flg,~,~] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[n,1]);
+    flg = check_A(A,[n,1]);
     if ~flg, error('A and A* do not appear consistent'); end; clear flg;
     if opts.scale_A, [A,b] = ScaleA(n,A,b); end
     params.Atb = A(b,2); % A'*b

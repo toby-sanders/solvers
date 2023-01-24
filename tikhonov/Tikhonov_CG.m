@@ -35,23 +35,26 @@ if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
 
 if nargin(A)==1
     B = @(x)A(x) + Dt(D(x))/opts.mu;
-    c = b;
 else
+    [flg,rel_diff] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[p*q*r,1]);
+    if ~flg
+        error('A and A* operator mismatch.\n Rel. difference in test was %g',rel_diff); 
+    end
     B = @(x)A(A(x,1),2) + Dt(D(x))/opts.mu;
-    c = A(b,2);
+    b = A(b,2);
 end
 
-x0 = zeros(size(c));
+x0 = zeros(size(b));
 
 if opts.gpu
-    c = gpuArray(single(c));
+    b = gpuArray(single(b));
     x0 = gpuArray(single(x0));
 end
 
 
 
 tic;
-[U,out] = my_local_cgs(B,c,opts.iter,opts.tol,x0);
+[U,out] = my_local_cgs(B,b,opts.iter,opts.tol,x0);
 out.total_time = toc;
 U = reshape(U,p,q,r);
 % out.rel_error = norm(A(U(:),1)-b)/norm(b);
