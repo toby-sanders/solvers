@@ -39,7 +39,7 @@ mu = opts.mu;
 if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode);end
 if nargin(A)==2    
     %check that A* is true adjoint of A
-    [flg,rel_diff] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[n,1]);
+    [flg,rel_diff] = check_A(A,[n,1]);
     if ~flg
         error('A and A* operator mismatch.\n Rel. difference in test was %g',rel_diff); 
     end
