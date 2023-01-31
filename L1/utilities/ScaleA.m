@@ -26,7 +26,9 @@ if ~isreal(A(rand(n,1),1))
 end
 
 fh = @(x) A(A(x,1),2);
-s2 = eigs(fh,n,1,'lm',eopts);
+% s2 = eigs(fh,n,1,'lm',eopts);
+[tau,out] = getStepLength(A,n);
+s2 = 1/tau;
 if real(s2) > 1 + 1e-10
     b = b/sqrt(s2);
     A = @(x,mode) A(x,mode)/sqrt(s2);
