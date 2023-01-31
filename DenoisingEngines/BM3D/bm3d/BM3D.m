@@ -174,6 +174,9 @@ end
 
 
 % convert z to double precision if needed
+if isgpuarray(z)
+    z = gather(z);
+end
 z = double(z);
 
 % Check if sigmas were passed instead of PSDs.
