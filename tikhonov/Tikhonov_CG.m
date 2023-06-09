@@ -36,9 +36,14 @@ if ~isa(A,'function_handle'), A = @(u,mode) f_handleA(A,u,mode); end
 if nargin(A)==1
     B = @(x)A(x) + Dt(D(x))/opts.mu;
 else
-    [flg,rel_diff] = check_D_Dt(@(u)A(u,1),@(u)A(u,2),[p*q*r,1]);
+    [flg,rel_diff] = check_A(A,[p*q*r,1]);
     if ~flg
-        error('A and A* operator mismatch.\n Rel. difference in test was %g',rel_diff); 
+        if isgpuarray(rel_diff)
+            [flg,rel_diff] = check_A(A,[p*q*r,1]);
+        end
+        if ~flg
+                error('A and A* operator mismatch.\n Rel. difference in test was %g',rel_diff); 
+        end
     end
     B = @(x)A(A(x,1),2) + Dt(D(x))/opts.mu;
     b = A(b,2);
